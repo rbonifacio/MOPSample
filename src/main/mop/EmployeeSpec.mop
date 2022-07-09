@@ -1,0 +1,36 @@
+import br.unb.cic.mop.Employee;
+
+EmployeeSpec(Employee emp) {
+
+    creation event c1 after() returning(Employee emp): call(public Employee.new(String)) { }
+
+    creation event c2 after(String name, double salary) returning(Employee emp):
+      call(public Employee.new(String, double)) &&
+      args(name, salary) &&
+      condition(salary > 0) { }
+
+    creation event c3 after(String name, double salary) returning(Employee emp):
+      call(public Employee.new(String, double)) &&
+      args(name, salary) &&
+      condition(salary <= 0.0) { }
+
+    event validSalary before(double salary, Employee emp):
+      call(public void Employee.setSalary(double)) &&
+      target(emp) &&
+      args(salary) && condition(salary > 0) { }
+
+    event invalidSalary before(double salary, Employee emp):
+      call(public void Employee.setSalary(double)) &&
+      target(emp) &&
+      args(salary) && condition(salary <= 0) {}
+
+    event total after(Employee emp):
+      call(public double Employee.totalSalary()) &&
+      target(emp) { }
+
+    ere : (c1 validSalary total*) | (c2 total*)
+
+    @fail {
+        throw new RuntimeException("invalid sequence of method calls");
+    }
+}
