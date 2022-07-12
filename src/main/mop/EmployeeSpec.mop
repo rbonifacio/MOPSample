@@ -28,7 +28,7 @@ EmployeeSpec(Employee emp) {
       call(public double Employee.totalSalary()) &&
       target(emp) { }
 
-    ere : (c1 validSalary total*) | (c2 total*)
+    ere : (c1 validSalary (validSalary | total)*) | (c2 (validSalary | total)*)
 
     @fail {
         throw new RuntimeException("invalid sequence of method calls");
