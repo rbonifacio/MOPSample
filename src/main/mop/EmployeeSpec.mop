@@ -24,13 +24,54 @@ EmployeeSpec(Employee emp) {
       target(emp) &&
       args(salary) && condition(salary <= 0) {}
 
+    event validCut before(int percentage, Employee emp):
+       call(public void Employee.cutSalary(int)) &&
+       args(percentage) &&
+       target(emp) &&
+       condition(percentage > 0 && percentage <= 99) {}
+
+    event invalidCut before(int percentage, Employee emp):
+      call(public void Employee.cutSalary(int)) &&
+      args(percentage) &&
+      target(emp) &&
+      condition(percentage < 0 || percentage > 99) {}
+
     event total after(Employee emp):
       call(public double Employee.totalSalary()) &&
       target(emp) { }
 
-    ere : (c1 validSalary (validSalary | total)*) | (c2 (validSalary | total)*)
+    // ere : (c1 validSalary (validSalary | total)*) | (c2 (validSalary | total)*)
 
-    @fail {
+    fsm :
+      start [
+         c1 -> waitingSetSalary
+         c2 -> salaryAlreadyDefined
+      ]
+      waitingSetSalary [
+         validSalary -> salaryAlreadyDefined
+         total -> failure
+      ]
+      salaryAlreadyDefined [
+         validSalary -> salaryAlreadyDefined
+         total -> salaryAlreadyDefined
+         validCut -> salaryAlreadyDefined
+      ]
+      failure [
+
+      ]
+
+      alias final = salaryAlreadyDefined
+      alias error = failure
+
+      @final {
+        System.out.println("end state:");
+      }
+
+      @error {
         throw new RuntimeException("invalid sequence of method calls");
-    }
+      }
+
+      @fail {
+        throw new RuntimeException("invalid sequence of method calls");
+      }
 }
